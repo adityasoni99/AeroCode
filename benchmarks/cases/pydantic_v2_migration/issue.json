@@ -1,0 +1,10 @@
+{
+  "issue_id": "pydantic_v2_migration",
+  "title": "Pydantic V2: parse_obj AttributeError",
+  "description": "Calling UserModel.parse_obj(data) raises AttributeError because Pydantic V2 removed this method.",
+  "traceback": "AttributeError: type object 'UserModel' has no attribute 'parse_obj'",
+  "target_package": "pydantic",
+  "package_version": "2.6.1",
+  "expected_fix_symbol": "model_validate",
+  "category": "api_migration"
+}

@@ -35,3 +35,7 @@ aero-code = "aero_code.cli:cli"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["aero_code*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

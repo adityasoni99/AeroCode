@@ -1,0 +1,10 @@
+{
+  "issue_id": "requests_timeout_kwarg",
+  "title": "requests.get() missing timeout causes indefinite hang",
+  "description": "HTTP requests made without a timeout kwarg may hang indefinitely. When timeout=None (the default) the socket never times out.",
+  "traceback": "requests.exceptions.ConnectionError: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+  "target_package": "requests",
+  "package_version": "2.31.0",
+  "expected_fix_symbol": "timeout",
+  "category": "missing_parameter"
+}
