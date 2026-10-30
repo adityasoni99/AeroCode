@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aero-code"
+version = "0.1.0"
+description = "Aero-Code (ProofLoop): Deterministic Autonomous Software Engineering Agent with Verification Engine"
+readme = "README.md"
+license = { text = "Apache-2.0" }
+requires-python = ">=3.11"
+authors = [
+    { name = "Aero-Code Team" }
+]
+dependencies = [
+    "pydantic>=2.6.0",
+    "pydantic-settings>=2.0.0",
+    "openai>=1.10.0",
+    "tavily-python>=0.3.0",
+    "fastapi>=0.100.0",
+    "uvicorn>=0.22.0",
+    "rich>=13.0.0",
+    "click>=8.0.0",
+    "httpx>=0.24.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+]
+
+[project.scripts]
+aero-code = "aero_code.cli:cli"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["aero_code*"]
