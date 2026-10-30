@@ -23,3 +23,8 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore",
     )
+
+
+def get_settings() -> Settings:
+    """Return an instance of Settings."""
+    return Settings()

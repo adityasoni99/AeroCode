@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Aero-Code: Deterministic Autonomous Software Engineering Agent with Verification Engine and Real-Time SSE ProofLoop Dashboard">
+  <title>Aero-Code | ProofLoop Verification Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body class="dark-theme">
+  <!-- Top Navigation Header -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="logo-group">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <div class="logo-text">
+          <h1 id="app-title">AERO<span>CODE</span></h1>
+          <span class="badge-subtitle">ProofLoop™ Deterministic SE Agent</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="header-center">
+      <div class="connection-status" id="connection-status">
+        <span class="pulse-dot"></span>
+        <span id="connection-label">Connecting to EventBus...</span>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <div class="llm-pill">
+        <span class="pill-label">PRIMARY</span>
+        <span class="pill-value" id="primary-model-label">nvidia/Nemotron-3-Nano-30b</span>
+      </div>
+      <div class="llm-pill escalation">
+        <span class="pill-label">ESCALATION</span>
+        <span class="pill-value" id="escalation-model-label">nvidia/Nemotron-3-Ultra-550b</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Layout -->
+  <main class="dashboard-main">
+    <!-- Pipeline State Machine Stepper -->
+    <section class="stepper-section card-glass">
+      <div class="section-header">
+        <h2>Deterministic ProofLoop Pipeline</h2>
+        <span class="stepper-mode-tag" id="stepper-mode">STANDBY</span>
+      </div>
+      <div class="stepper-container" id="pipeline-stepper">
+        <div class="step-node" id="step-INTAKE" data-phase="INTAKE">
+          <div class="step-circle">1</div>
+          <div class="step-label">Intake</div>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-node" id="step-INVESTIGATE" data-phase="INVESTIGATE">
+          <div class="step-circle">2</div>
+          <div class="step-label">Investigate</div>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-node" id="step-RESEARCH" data-phase="RESEARCH">
+          <div class="step-circle">3</div>
+          <div class="step-label">Tavily Research</div>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-node" id="step-REPRODUCE_BASELINE" data-phase="REPRODUCE_BASELINE">
+          <div class="step-circle">4</div>
+          <div class="step-label">Repro Baseline</div>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-node" id="step-GENERATE_PATCH" data-phase="GENERATE_PATCH">
+          <div class="step-circle">5</div>
+          <div class="step-label">Generate Patch</div>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-node" id="step-GIT_GUARD" data-phase="GIT_GUARD">
+          <div class="step-circle">6</div>
+          <div class="step-label">Git Guard</div>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-node" id="step-SANDBOX_EXECUTE" data-phase="SANDBOX_EXECUTE">
+          <div class="step-circle">7</div>
+          <div class="step-label">Sandbox Verify</div>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-node" id="step-EVIDENCE_REPORT" data-phase="EVIDENCE_REPORT">
+          <div class="step-circle">8</div>
+          <div class="step-label">Evidence Report</div>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-node" id="step-PUBLISH_PR" data-phase="PUBLISH_PR">
+          <div class="step-circle">9</div>
+          <div class="step-label">Publish PR</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Mid Grid: Trigger & Double Verification Matrix -->
+    <div class="dashboard-grid-mid">
+      <!-- Trigger Panel -->
+      <section class="card-glass trigger-panel">
+        <div class="card-header">
+          <h3>Trigger ProofLoop Engine</h3>
+          <span class="preset-tag">Quick Presets</span>
+        </div>
+        <div class="preset-buttons">
+          <button type="button" class="btn-preset active" id="btn-preset-pydantic">Pydantic V2 Migration</button>
+          <button type="button" class="btn-preset" id="btn-preset-requests">Requests Timeout Kwarg</button>
+        </div>
+        <form id="run-form" class="run-form">
+          <div class="form-group">
+            <label for="issue-title">Issue Title</label>
+            <input type="text" id="issue-title" value="Pydantic V2: parse_obj AttributeError" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="target-package">Target Package</label>
+              <input type="text" id="target-package" value="pydantic" required>
+            </div>
+            <div class="form-group">
+              <label for="package-version">Version</label>
+              <input type="text" id="package-version" value="2.6.1" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="issue-traceback">Traceback / Error Log</label>
+            <textarea id="issue-traceback" rows="3">AttributeError: type object 'UserModel' has no attribute 'parse_obj'</textarea>
+          </div>
+          <div class="form-actions">
+            <button type="submit" id="btn-run-loop" class="btn-primary">
+              <span class="btn-icon">⚡</span> Run ProofLoop
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Double Verification Matrix -->
+      <section class="card-glass matrix-panel">
+        <div class="card-header">
+          <h3>Double-Verification Matrix</h3>
+          <div class="verdict-tag" id="verdict-badge">AWAITING RUN</div>
+        </div>
+        <p class="matrix-explainer">ProofLoop requires cryptographically verifiable proof before generating any pull request.</p>
+        <div class="matrix-grid">
+          <div class="matrix-item" id="matrix-repro">
+            <div class="matrix-item-icon">✕</div>
+            <div class="matrix-item-content">
+              <h4>Bug Reproduction (Non-Vacuous)</h4>
+              <p>Regression test failed on unpatched codebase</p>
+            </div>
+            <div class="matrix-status-pill pending" id="status-repro">PENDING</div>
+          </div>
+
+          <div class="matrix-item" id="matrix-fix">
+            <div class="matrix-item-icon">✓</div>
+            <div class="matrix-item-content">
+              <h4>Bug Resolution</h4>
+              <p>Regression test passed on patched codebase</p>
+            </div>
+            <div class="matrix-status-pill pending" id="status-fix">PENDING</div>
+          </div>
+
+          <div class="matrix-item" id="matrix-regression">
+            <div class="matrix-item-icon">🛡</div>
+            <div class="matrix-item-content">
+              <h4>Zero Regressions</h4>
+              <p>Existing baseline test suite remains 100% green</p>
+            </div>
+            <div class="matrix-status-pill pending" id="status-regression">PENDING</div>
+          </div>
+
+          <div class="matrix-item" id="matrix-gitguard">
+            <div class="matrix-item-icon">🔒</div>
+            <div class="matrix-item-content">
+              <h4>Git Guard Policy</h4>
+              <p>Baseline tests and build configurations unmodified</p>
+            </div>
+            <div class="matrix-status-pill pending" id="status-gitguard">PENDING</div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Bottom Grid: Live Event Log, Code Diff & Research Citations -->
+    <div class="dashboard-grid-bottom">
+      <!-- Live SSE Log Stream -->
+      <section class="card-glass log-panel">
+        <div class="card-header">
+          <h3>Live ProofLoop Event Stream</h3>
+          <button id="btn-clear-logs" class="btn-ghost">Clear</button>
+        </div>
+        <div class="terminal-container" id="terminal-logs">
+          <div class="terminal-line system">[SYSTEM] Aero-Code ProofLoop client initialized. Ready to receive events.</div>
+        </div>
+      </section>
+
+      <!-- Patch Diff & Citations -->
+      <section class="card-glass patch-panel">
+        <div class="card-header">
+          <h3>Synthesized Patch & Tavily Citations</h3>
+          <span class="active-file-tag" id="patch-file-label">None</span>
+        </div>
+        <div class="patch-viewer" id="patch-viewer">
+          <pre><code id="diff-content">// Proposed patch diff will appear here in real time...</code></pre>
+        </div>
+        <div class="citations-container" id="citations-container">
+          <h4>Contextual Research Citations</h4>
+          <ul id="citations-list" class="citations-list">
+            <li class="empty-citations">No citations fetched yet. Run ProofLoop to query Tavily API.</li>
+          </ul>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <p>Aero-Code ProofLoop • Nebius Token Factory • NVIDIA Nemotron • Tavily AI Research</p>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
