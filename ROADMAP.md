@@ -14,7 +14,7 @@ This document outlines the sequenced development milestones and technical delive
   - Subprocess sandbox verifier with credential stripping
   - Curated seeded benchmark suite (`pydantic_v2_migration`, `requests_timeout_kwarg`)
   - Real-time FastAPI SSE Web Dashboard & Rich CLI
-  - 23/23 unit and integration tests passing
+  - 25/25 unit and integration tests passing
 
 ---
 
@@ -29,12 +29,12 @@ This document outlines the sequenced development milestones and technical delive
 
 ### Phase 2: PayPal AI Hackathon Track (Target: Nov 8, 2026)
 > *Goal: Mission-critical code verification for financial APIs and webhook resilience.*
-- [ ] **PayPal SDK Benchmark Case:**
+- [x] **PayPal SDK Benchmark Case:**
   - Create `benchmarks/cases/paypal_webhook_signature/` reproducing signature header deprecations.
   - Test ProofLoop repairing the webhook validation without bypassing signature checks.
-- [ ] **Payment Anomaly Detection & Guardrails:**
+- [x] **Payment Anomaly Detection & Guardrails:**
   - Add compliance rule to `GitGuard` flagging edits touching secret credential variables or SSL verification bypass (`verify=False`).
-- [ ] **Release Tag:** `v0.2.0-paypal` & submit to PayPal AI Hackathon.
+- [x] **Release Tag:** `v0.2.0-paypal` & submit to PayPal AI Hackathon.
 
 ---
 
