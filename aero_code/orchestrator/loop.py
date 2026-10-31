@@ -20,6 +20,7 @@ from aero_code.tools.tavily_client import TavilySearchClient
 from aero_code.verifier.git_guard import GitGuard
 from aero_code.verifier.report_generator import EvidenceReportGenerator
 from aero_code.verifier.sandbox.base import BaseSandboxAdapter
+from aero_code.verifier.sandbox.docker import DockerSandboxAdapter
 from aero_code.verifier.sandbox.subprocess import SubprocessSandboxAdapter
 
 
@@ -48,9 +49,16 @@ class ProofLoopOrchestrator:
         self.git_guard = GitGuard()
         self.report_generator = EvidenceReportGenerator()
         self.github_client = GitHubClient()
-        self.sandbox = sandbox_adapter or SubprocessSandboxAdapter(
-            timeout_seconds=self.settings.timeout_seconds
-        )
+        if sandbox_adapter is not None:
+            self.sandbox = sandbox_adapter
+        elif self.mode == "demo":
+            self.sandbox = SubprocessSandboxAdapter(timeout_seconds=self.settings.timeout_seconds)
+        else:
+            self.sandbox = DockerSandboxAdapter(
+                timeout_seconds=self.settings.timeout_seconds,
+                image=self.settings.sandbox_image,
+                allow_subprocess_fallback=self.settings.sandbox_allow_subprocess_fallback,
+            )
 
     def _emit(self, event_type: str, payload: dict, phase: Optional[ProofLoopPhase] = None) -> None:
         """Publish telemetry event to event bus."""

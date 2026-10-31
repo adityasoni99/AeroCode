@@ -17,6 +17,8 @@ class Settings(BaseSettings):
     mode: str = "demo"  # "demo" or "live"
     timeout_seconds: int = 45
     max_retries: int = 3
+    sandbox_image: str = "aero-code-sandbox:local"
+    sandbox_allow_subprocess_fallback: bool = False
 
     model_config = SettingsConfigDict(
         env_file=".env",

@@ -145,7 +145,69 @@ aero-code web
 pytest -v
 ```
 
-All 23 unit and integration tests pass with 100% clean assertions.
+The default suite includes mocked Docker lifecycle tests and requires no Docker daemon.
+Real-container checks are opt-in (see below).
+
+### Docker Sandbox (Live Mode)
+
+Live ProofLoop runs use `DockerSandboxAdapter`; demo mode retains the local
+subprocess adapter for reproducible, offline fixtures. Docker Desktop must be
+running with Linux containers, or use a local Linux Docker daemon.
+
+Build a trusted image **before** verification. This PowerShell example builds an
+image for the bundled benchmarks without sending a repository build context:
+
+```powershell
+@'
+FROM python:3.11-slim
+RUN python -m pip install --no-cache-dir pytest pydantic requests
+'@ | docker build --tag aero-code-sandbox:local -
+```
+
+For other repositories, build an image containing their dependencies and pytest,
+then set `SANDBOX_IMAGE` in your environment or `.env`. Verification never pulls
+images or installs packages, and an absent image is an explicit failure.
+
+Every run stages a temporary repository copy, applies patches only to that copy,
+and runs pytest in a disposable container with:
+
+- 2 CPUs, 2 GiB RAM, no additional swap, and a 128-process limit.
+- No network, no added capabilities, no privilege escalation, and an unprivileged user.
+- A read-only root filesystem and staged-source mount; writable in-memory
+  workspace (512 MiB) and temporary directory (64 MiB).
+- A shared execution deadline capped at 60 seconds (shorter configured timeouts
+  are respected), followed by force-removal with a separate 5-second cleanup limit.
+
+Repository symlinks/junctions, `.env` files, version-control metadata, virtual environments,
+and caches are excluded from both adapters' staged copies. Patch paths must stay
+inside the workspace. Container environment variables come from the trusted image,
+not the host. Credentials embedded in other repository files must be removed
+before verification; these exclusions are not a general secret scanner.
+
+Docker-unavailable runs fail closed by default. Setting
+`SANDBOX_ALLOW_SUBPROCESS_FALLBACK=true` explicitly permits host subprocess
+execution **only** when the CLI/daemon is unavailable, with a warning that
+container isolation is lost. Failed tests, missing images, runtime failures,
+timeouts, and cleanup failures never trigger fallback. Subprocess mode is for
+trusted code, not zero-trust isolation.
+
+Run the full suite on Windows:
+
+```powershell
+.\.venv\Scripts\pytest tests\ -v
+```
+
+Enable real-container integration tests after building the image:
+
+```powershell
+$env:AERO_CODE_DOCKER_INTEGRATION = "1"
+$env:AERO_CODE_DOCKER_IMAGE = "aero-code-sandbox:local"
+.\.venv\Scripts\pytest tests\test_docker_sandbox.py -v
+```
+
+These opt-in checks verify filesystem/network isolation, CPU/memory limits,
+patch execution, failing tests, and hard timeouts. Without the opt-in flag they
+are skipped, keeping CI independent of Docker.
 
 ---
 

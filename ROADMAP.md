@@ -40,12 +40,16 @@ This document outlines the sequenced development milestones and technical delive
 
 ### Phase 3: Agentic Sandbox Hardening (Target: Nov 16, 2026)
 > *Goal: Zero-trust isolated container execution for untrusted code.*
-- [ ] **Native Docker Sandbox Adapter:**
+- [x] **Native Docker Sandbox Adapter:**
   - Complete disposable container lifecycle in `aero_code/verifier/sandbox/docker.py`.
   - Enforce resource limits (2 vCPU, 2GB RAM max, 60s hard timeout) and network isolation.
+  - Live mode is Docker-first, with explicit unavailable-only subprocess fallback;
+    demo mode preserves offline subprocess execution.
+  - Mocked lifecycle tests run without Docker; real-container integration tests are opt-in.
 - [ ] **NVIDIA OpenShell Integration Spike:**
   - Evaluate NVIDIA OpenShell runtime for agent filesystem isolation.
-- [ ] **Release Tag:** `v0.2.5-agentic` & submit to Agentic AI Hackathon.
+- [x] **Release Tag:** `v0.2.5-agentic` (Docker sandbox hardening).
+- [ ] Submit to Agentic AI Hackathon after the OpenShell integration spike.
 
 ---
 

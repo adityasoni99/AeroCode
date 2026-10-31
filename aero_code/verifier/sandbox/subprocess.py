@@ -1,7 +1,6 @@
 """Ephemeral subprocess sandbox adapter with credential stripping and timeout enforcement."""
 
 import os
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -32,19 +31,6 @@ class SubprocessSandboxAdapter(BaseSandboxAdapter):
             env.pop(var, None)
         return env
 
-    def _apply_patch(self, sandbox_dir: Path, patch: PatchProposal) -> None:
-        """Apply patch diffs and write the regression test file in the sandbox."""
-        for diff in patch.diffs:
-            target_path = sandbox_dir / diff.file_path
-            target_path.parent.mkdir(parents=True, exist_ok=True)
-            # If new_content is provided, write it directly
-            target_path.write_text(diff.new_content, encoding="utf-8")
-
-        if patch.regression_test_code and patch.regression_test_file:
-            test_path = sandbox_dir / patch.regression_test_file
-            test_path.parent.mkdir(parents=True, exist_ok=True)
-            test_path.write_text(patch.regression_test_code, encoding="utf-8")
-
     def run_test_suite(
         self,
         repo_root: str,
@@ -56,14 +42,7 @@ class SubprocessSandboxAdapter(BaseSandboxAdapter):
 
         with tempfile.TemporaryDirectory() as temp_dir:
             sandbox_path = Path(temp_dir) / "repo"
-            # Copy source directory to sandbox ignoring caches and venvs
-            shutil.copytree(
-                repo_root,
-                sandbox_path,
-                ignore=shutil.ignore_patterns(
-                    ".git", ".venv", "venv", "__pycache__", ".pytest_cache", ".superpowers"
-                ),
-            )
+            self._prepare_workspace(repo_root, sandbox_path)
 
             # Apply patch diffs if provided
             if patch is not None:
