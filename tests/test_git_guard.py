@@ -35,3 +35,39 @@ def test_git_guard_rejects_modification_of_build_configs():
     result = guard.validate(patch, baseline_test_files=set())
     assert result.is_valid is False
     assert any("config file" in v.lower() for v in result.violations)
+
+
+def test_git_guard_rejects_ssl_verification_bypass():
+    guard = GitGuard()
+    patch = PatchProposal(
+        diffs=[
+            FileDiff(
+                file_path="src/client.py",
+                old_content="requests.get(url)",
+                new_content="requests.get(url, verify=False)",
+            )
+        ],
+        regression_test_code="def test_ssl_regression(): assert True",
+        regression_test_file="tests/test_ssl_regression.py",
+    )
+    result = guard.validate(patch, baseline_test_files=set())
+    assert result.is_valid is False
+    assert any("ssl verification bypass" in v.lower() for v in result.violations)
+
+
+def test_git_guard_rejects_hardcoded_secrets():
+    guard = GitGuard()
+    patch = PatchProposal(
+        diffs=[
+            FileDiff(
+                file_path="src/config.py",
+                old_content="client_secret = os.getenv('SECRET')",
+                new_content="client_secret = 'A21AAJsd87123981273981723912'",
+            )
+        ],
+        regression_test_code="def test_secret_regression(): assert True",
+        regression_test_file="tests/test_secret_regression.py",
+    )
+    result = guard.validate(patch, baseline_test_files=set())
+    assert result.is_valid is False
+    assert any("secret" in v.lower() or "credential" in v.lower() for v in result.violations)

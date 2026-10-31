@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Presets
   const btnPresetPydantic = document.getElementById('btn-preset-pydantic');
   const btnPresetRequests = document.getElementById('btn-preset-requests');
+  const btnPresetPaypal = document.getElementById('btn-preset-paypal');
   const issueTitleInput = document.getElementById('issue-title');
   const targetPkgInput = document.getElementById('target-package');
   const pkgVersionInput = document.getElementById('package-version');
@@ -48,12 +49,19 @@ document.addEventListener('DOMContentLoaded', () => {
       package: "requests",
       version: "2.31.0",
       traceback: "requests.exceptions.ConnectionError: ('Connection aborted.', RemoteDisconnected())"
+    },
+    paypal: {
+      title: "PayPal Webhook Verification: Missing transmission headers causes verification failure",
+      package: "paypalrestsdk",
+      version: "1.13.3",
+      traceback: "PayPalWebhookVerificationError: Missing required PayPal transmission headers: PAYPAL-TRANSMISSION-SIG, PAYPAL-CERT-URL, PAYPAL-TRANSMISSION-TIME"
     }
   };
 
   btnPresetPydantic.addEventListener('click', () => {
     btnPresetPydantic.classList.add('active');
     btnPresetRequests.classList.remove('active');
+    btnPresetPaypal.classList.remove('active');
     issueTitleInput.value = PRESETS.pydantic.title;
     targetPkgInput.value = PRESETS.pydantic.package;
     pkgVersionInput.value = PRESETS.pydantic.version;
@@ -63,10 +71,21 @@ document.addEventListener('DOMContentLoaded', () => {
   btnPresetRequests.addEventListener('click', () => {
     btnPresetRequests.classList.add('active');
     btnPresetPydantic.classList.remove('active');
+    btnPresetPaypal.classList.remove('active');
     issueTitleInput.value = PRESETS.requests.title;
     targetPkgInput.value = PRESETS.requests.package;
     pkgVersionInput.value = PRESETS.requests.version;
     tracebackInput.value = PRESETS.requests.traceback;
+  });
+
+  btnPresetPaypal.addEventListener('click', () => {
+    btnPresetPaypal.classList.add('active');
+    btnPresetPydantic.classList.remove('active');
+    btnPresetRequests.classList.remove('active');
+    issueTitleInput.value = PRESETS.paypal.title;
+    targetPkgInput.value = PRESETS.paypal.package;
+    pkgVersionInput.value = PRESETS.paypal.version;
+    tracebackInput.value = PRESETS.paypal.traceback;
   });
 
   function appendLog(text, type = 'system') {

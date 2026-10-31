@@ -7,9 +7,10 @@ from aero_code.schemas.report import EvidenceReport, VerificationVerdict
 def test_benchmark_suite_loading():
     suite = BenchmarkSuite()
     cases = suite.load_cases()
-    assert len(cases) >= 2
+    assert len(cases) >= 3
     assert any(c.case_id == "pydantic_v2_migration" for c in cases)
     assert any(c.case_id == "requests_timeout_kwarg" for c in cases)
+    assert any(c.case_id == "paypal_webhook_signature" for c in cases)
 
 
 def test_benchmark_suite_run_all():

@@ -61,12 +61,30 @@ class GitGuard:
                 return True
         return False
 
+    SSL_BYPASS_PATTERN = re.compile(r"\bverify\s*=\s*False\b", re.IGNORECASE)
+    SECRET_LEAKAGE_PATTERN = re.compile(
+        r"(?i)\b(client_secret|api_key|access_token|secret_key|webhook_secret|auth_token)\s*=\s*['\"][A-Za-z0-9_\-]{12,}['\"]"
+    )
+
+    def _check_security_violations(self, content: str, file_path: str) -> List[str]:
+        """Check patch content for security and compliance violations."""
+        security_violations = []
+        if self.SSL_BYPASS_PATTERN.search(content):
+            security_violations.append(
+                f"SSL verification bypass (e.g. verify=False) is prohibited: {file_path}"
+            )
+        if self.SECRET_LEAKAGE_PATTERN.search(content):
+            security_violations.append(
+                f"Hardcoded credential or secret detected in patch: {file_path}"
+            )
+        return security_violations
+
     def validate(
         self,
         patch: PatchProposal,
         baseline_test_files: Optional[Set[str]] = None,
     ) -> GitGuardResult:
-        """Validate that the proposed patch does not touch protected files or existing tests."""
+        """Validate that the proposed patch does not touch protected files, existing tests, or introduce security vulnerabilities."""
         violations: List[str] = []
         baseline_tests = {self._normalize_path(f) for f in (baseline_test_files or set())}
 
@@ -91,12 +109,21 @@ class GitGuard:
                     f"Modification of immutable baseline test file is prohibited: {diff.file_path}"
                 )
 
-        # 3. Check regression test target file
+            # 3. Security and payment compliance rules
+            violations.extend(self._check_security_violations(diff.new_content, diff.file_path))
+
+        # 4. Check regression test target file
         if patch.regression_test_file:
             norm_reg_file = self._normalize_path(patch.regression_test_file)
             if norm_reg_file in baseline_tests:
                 violations.append(
                     f"Regression test cannot overwrite existing baseline test: {patch.regression_test_file}"
+                )
+            if patch.regression_test_code:
+                violations.extend(
+                    self._check_security_violations(
+                        patch.regression_test_code, patch.regression_test_file
+                    )
                 )
 
         return GitGuardResult(

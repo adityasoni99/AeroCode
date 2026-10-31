@@ -1,0 +1,10 @@
+{
+  "issue_id": "paypal_webhook_signature",
+  "title": "PayPal Webhook Verification: Missing transmission headers causes verification failure",
+  "description": "Legacy verify_webhook() only inspected PAYPAL-AUTH-ALGO and ignored modern PAYPAL-TRANSMISSION-SIG, PAYPAL-CERT-URL, and PAYPAL-TRANSMISSION-TIME headers, raising PayPalWebhookVerificationError on incoming payment capture events.",
+  "traceback": "PayPalWebhookVerificationError: Missing required PayPal transmission headers: PAYPAL-TRANSMISSION-SIG, PAYPAL-CERT-URL, PAYPAL-TRANSMISSION-TIME",
+  "target_package": "paypalrestsdk",
+  "package_version": "1.13.3",
+  "expected_fix_symbol": "verify_webhook_signature",
+  "category": "payment_security"
+}
