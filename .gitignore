@@ -15,7 +15,7 @@ dist/
 build/
 
 # SDD scratch & temporary files
-.superpowers/sdd/
+.superpowers/
 .worktrees/
 worktrees/
 
