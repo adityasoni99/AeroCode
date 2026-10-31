@@ -21,8 +21,8 @@ This document outlines the sequenced development milestones and technical delive
 ## 🚀 Upcoming Milestones (In Priority Order)
 
 ### Phase 1: Repository Publication & CI Automation (Immediate)
-- [ ] Push local `main` branch and tags to GitHub repository `https://github.com/adityasoni99/AeroCode.git`.
-- [ ] Add `.github/workflows/ci.yml` running pytest across Python 3.11 and 3.12.
+- [x] Push local `main` branch and tags to GitHub repository `https://github.com/adityasoni99/AeroCode.git`.
+- [x] Add `.github/workflows/ci.yml` running pytest across Python 3.11 and 3.12.
 - [ ] Add pre-commit hook enforcing Black, Flake8, and Git Guard rule validation.
 
 ---
