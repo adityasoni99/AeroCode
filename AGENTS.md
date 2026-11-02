@@ -55,6 +55,9 @@ export GIT_COMMITTER_EMAIL="aditya.ece.111006@gmail.com"
   - `v0.2.5-agentic` — Agentic AI Hackathon
   - `v0.3.0-kiro` — Kiroween IDE Hackathon
   - `v0.4.0-codegeist` — Codegeist 2026
+- `v0.2.6-verified` is the validated Docker/dashboard follow-up release.
+- Preserve existing tags. A release tag is not a submission receipt or evidence
+  of hackathon eligibility; consult [docs/HACKATHON_SUBMISSIONS.md](docs/HACKATHON_SUBMISSIONS.md).
 
 ---
 
@@ -63,6 +66,11 @@ export GIT_COMMITTER_EMAIL="aditya.ece.111006@gmail.com"
 - **All tests must pass before committing**: run `.venv\Scripts\pytest tests\ -v` (Windows) or `.venv/bin/pytest tests/ -v` (Linux/macOS).
 - Never commit with failing tests.
 - New features must include corresponding tests in `tests/`.
+- Browser checks: install `.[dev,browser]`, then run
+  `.venv\Scripts\python -m playwright install chromium`.
+- Real Docker checks require a running Linux Docker daemon, a prebuilt
+  `aero-code-sandbox:local` image, and `AERO_CODE_DOCKER_INTEGRATION=1`.
+  Missing prerequisites/skips must be reported, not treated as successful coverage.
 
 ---
 
@@ -72,7 +80,8 @@ export GIT_COMMITTER_EMAIL="aditya.ece.111006@gmail.com"
 aero_code/
   orchestrator/   — ProofLoop deterministic state machine
   verifier/       — Git Guard + Sandbox runner
-  tools/          — Nebius LLM client, Tavily search
+  llm/            — Nebius Token Factory / Nemotron client and prompts
+  tools/          — Tavily search and GitHub client
   agents/         — Investigator + PatchEngineer agents
   schemas/        — Pydantic v2 data models
   web/            — FastAPI SSE dashboard
@@ -91,3 +100,6 @@ docs/             — Architecture, plans, specs
 - Virtual environment: `.venv/` (use `.venv\Scripts\activate` on Windows).
 - Copy `.env.example` to `.env` and populate API keys before running live mode.
 - Demo mode (no API keys needed) is the default for tests.
+- Settings use unprefixed names (`MODE`, `TIMEOUT_SECONDS`, `PRIMARY_MODEL`, etc.).
+- Live verification defaults to Docker with host fallback disabled. Demo subprocess
+  execution is for trusted fixtures, not zero-trust isolation.

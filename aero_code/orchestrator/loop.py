@@ -121,6 +121,7 @@ class ProofLoopOrchestrator:
                 "query": research_res.query,
                 "summary": research_res.summary,
                 "citations_count": len(research_res.citations),
+                "citations": [citation.model_dump(mode="json") for citation in research_res.citations],
             },
             ProofLoopPhase.RESEARCH,
         )
@@ -160,6 +161,7 @@ class ProofLoopOrchestrator:
                 retry_error=last_error,
             )
             state.patch = active_patch
+            self._emit("PATCH_GENERATED", {"patch": active_patch.model_dump(mode="json")})
 
             # 6. GIT_GUARD
             state.phase = ProofLoopPhase.GIT_GUARD
@@ -174,6 +176,7 @@ class ProofLoopOrchestrator:
                 escalated = True
                 last_error = f"Git Guard rejected patch: {', '.join(guard_res.violations)}"
                 continue
+            self._emit("GIT_GUARD_VERIFIED", {"is_valid": True}, ProofLoopPhase.GIT_GUARD)
 
             # 7. SANDBOX_EXECUTE
             state.phase = ProofLoopPhase.SANDBOX_EXECUTE
@@ -191,8 +194,8 @@ class ProofLoopOrchestrator:
                 test_target=active_patch.regression_test_file,
                 patch=repro_patch,
             )
-            # Non-vacuous test: exit_code != 0 on unpatched codebase
-            repro_confirmed = not repro_res.passed
+            # Pytest exit 1 means failed tests, not infrastructure/collection errors or timeout.
+            repro_confirmed = repro_res.exit_code == 1 and not repro_res.passed
 
             # Test B: Regression test must pass on patched code (Bug Resolution)
             patched_res = self.sandbox.run_test_suite(
@@ -208,14 +211,29 @@ class ProofLoopOrchestrator:
                 patch=active_patch,
             )
             patched_suite_passed = suite_res.passed
+            self._emit(
+                "DOUBLE_VERIFICATION_COMPLETE",
+                {
+                    "baseline_passed": not repro_confirmed,
+                    "patched_passed": patched_test_passed,
+                    "suite_passed": patched_suite_passed,
+                    "git_guard_passed": git_guard_passed,
+                },
+                ProofLoopPhase.SANDBOX_EXECUTE,
+            )
 
-            if patched_test_passed and patched_suite_passed:
+            if repro_confirmed and patched_test_passed and patched_suite_passed:
                 break  # Successful verification!
 
             # Retry handling
             retry_count += 1
             escalated = True
-            last_error = f"Test failure: {patched_res.stderr or patched_res.stdout}"
+            last_error = (
+                f"Bug reproduction not confirmed (exit {repro_res.exit_code}): "
+                f"{repro_res.stderr or repro_res.stdout}"
+                if not repro_confirmed
+                else f"Test failure: {patched_res.stderr or patched_res.stdout or suite_res.stderr}"
+            )
 
         # 8. EVIDENCE_REPORT
         state.phase = ProofLoopPhase.EVIDENCE_REPORT
@@ -224,7 +242,7 @@ class ProofLoopOrchestrator:
         total_duration_ms = (time.perf_counter() - start_time) * 1000.0
 
         # Verdict calculation per Double-Verification Rule
-        if git_guard_passed and patched_test_passed and patched_suite_passed:
+        if git_guard_passed and repro_confirmed and patched_test_passed and patched_suite_passed:
             verdict = VerificationVerdict.VERIFIED
         else:
             verdict = VerificationVerdict.INCONCLUSIVE
@@ -247,7 +265,7 @@ class ProofLoopOrchestrator:
             git_guard_passed=git_guard_passed,
             verdict=verdict,
             execution_duration_ms=total_duration_ms,
-            notes=f"Retries: {retry_count}, Escalated: {escalated}",
+            notes=f"Retries: {retry_count}, Escalated: {escalated}. {last_error if verdict != VerificationVerdict.VERIFIED else ''}",
         )
         state.report = evidence_report
 
@@ -269,6 +287,11 @@ class ProofLoopOrchestrator:
         self._emit(
             "PHASE_CHANGE",
             {"phase": ProofLoopPhase.COMPLETED.value, "verdict": verdict.value},
+            ProofLoopPhase.COMPLETED,
+        )
+        self._emit(
+            "RUN_COMPLETE",
+            {"verdict": verdict.value, "report": evidence_report.model_dump(mode="json")},
             ProofLoopPhase.COMPLETED,
         )
 

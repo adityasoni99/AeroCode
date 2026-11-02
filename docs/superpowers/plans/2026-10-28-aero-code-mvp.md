@@ -1,5 +1,14 @@
 # Aero-Code (ProofLoop) MVP Implementation Plan
 
+> **Historical plan, not a current status report.** The original October 28
+> instructions, expected failures, code samples, and unchecked steps are preserved
+> as design history. Do not re-execute them against the implemented repository.
+> As of November 2, 2026, `v0.2.6-verified` adds Docker and dashboard hardening:
+> 110 tests passed with Docker/Chromium enabled, with one Windows symlink skip.
+> See [README](../../../README.md), [ROADMAP](../../../ROADMAP.md), and
+> [submission guidance](../../HACKATHON_SUBMISSIONS.md) for current behavior,
+> commands, limitations, and event eligibility.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build and verify the complete Aero-Code (ProofLoop) Hackathon MVP featuring deterministic multi-agent bug repair, live Tavily research, Nebius Token Factory inference with NVIDIA Nemotron, Git Guard test immutability verification, an isolated sandbox runner, a Rich CLI, and a real-time web dashboard for video demonstration.

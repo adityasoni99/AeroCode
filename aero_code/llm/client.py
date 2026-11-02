@@ -107,6 +107,81 @@ class NebiusNemotronClient:
 
         if self.mode == "demo" or not self.settings.nebius_api_key:
             # Deterministic benchmark patch generation
+            if "def parse_user(" in source_code and "UserModel.parse_obj" in source_code:
+                return PatchProposal(
+                    diffs=[FileDiff(
+                        file_path="src/models.py", old_content=source_code,
+                        new_content=source_code.replace("UserModel.parse_obj", "UserModel.model_validate"),
+                    )],
+                    regression_test_file="tests/test_pydantic_v2_regression.py",
+                    regression_test_code=(
+                        "import warnings\n"
+                        "from src.models import parse_user\n\n"
+                        "def test_parse_without_deprecated_api():\n"
+                        "    with warnings.catch_warnings():\n"
+                        "        warnings.simplefilter('error', DeprecationWarning)\n"
+                        "        user = parse_user({'id': 1, 'name': 'Alice'})\n"
+                        "    assert user.id == 1\n"
+                        "    assert user.name == 'Alice'\n"
+                    ),
+                    explanation="Migrate the seeded parser to the supported Pydantic v2 API.",
+                )
+            if "def fetch_data(" in source_code and "requests.get(url)" in source_code:
+                return PatchProposal(
+                    diffs=[FileDiff(
+                        file_path="src/client.py", old_content=source_code,
+                        new_content=source_code.replace("requests.get(url)", "requests.get(url, timeout=10)"),
+                    )],
+                    regression_test_file="tests/test_requests_timeout_regression.py",
+                    regression_test_code=(
+                        "from unittest.mock import patch\n"
+                        "from src.client import fetch_data\n\n"
+                        "def test_fetch_uses_bounded_timeout():\n"
+                        "    with patch('src.client.requests.get') as get:\n"
+                        "        get.return_value.json.return_value = {'ok': True}\n"
+                        "        assert fetch_data('https://example.invalid') == {'ok': True}\n"
+                        "        assert get.call_args.kwargs.get('timeout') == 10\n"
+                        "        get.return_value.raise_for_status.assert_called_once()\n"
+                    ),
+                    explanation="Bound the seeded HTTP request to a ten-second timeout.",
+                )
+            if "def verify_webhook(" in source_code and '"PAYPAL-AUTH-ALGO" not in normalized_headers' in source_code:
+                required = (
+                    "PAYPAL-AUTH-ALGO", "PAYPAL-TRANSMISSION-ID", "PAYPAL-TRANSMISSION-SIG",
+                    "PAYPAL-TRANSMISSION-TIME", "PAYPAL-CERT-URL",
+                )
+                condition = f"any(not normalized_headers.get(key) for key in {required!r})"
+                return PatchProposal(
+                    diffs=[FileDiff(
+                        file_path="src/webhook.py", old_content=source_code,
+                        new_content=source_code.replace(
+                            '"PAYPAL-AUTH-ALGO" not in normalized_headers', condition
+                        ),
+                    )],
+                    regression_test_file="tests/test_paypal_headers_regression.py",
+                    regression_test_code=(
+                        "import pytest\n"
+                        "from src.webhook import verify_webhook, PayPalWebhookVerificationError\n\n"
+                        f"REQUIRED = {required!r}\n\n"
+                        "@pytest.mark.parametrize('key', REQUIRED)\n"
+                        "@pytest.mark.parametrize('missing', [True, False])\n"
+                        "def test_rejects_missing_or_empty_header(key, missing):\n"
+                        "    headers = {name: 'demo-value' for name in REQUIRED}\n"
+                        "    if missing:\n"
+                        "        del headers[key]\n"
+                        "    else:\n"
+                        "        headers[key] = ''\n"
+                        "    with pytest.raises(PayPalWebhookVerificationError):\n"
+                        "        verify_webhook(headers, '{}', 'demo-webhook')\n\n"
+                        "def test_accepts_complete_case_insensitive_headers():\n"
+                        "    headers = {name.lower(): 'demo-value' for name in REQUIRED}\n"
+                        "    assert verify_webhook(headers, '{}', 'demo-webhook') is True\n"
+                    ),
+                    explanation=(
+                        "Validate required transmission headers in the seeded demo. "
+                        "This fixture does not perform cryptographic signature verification."
+                    ),
+                )
             if "parse_obj" in (issue_title + source_code + research_context):
                 new_code = source_code.replace("parse_obj", "model_validate") if source_code else "UserModel.model_validate()"
                 return PatchProposal(

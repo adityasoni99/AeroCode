@@ -28,6 +28,9 @@ dependencies = [
 dev = [
     "pytest>=7.0.0",
 ]
+browser = [
+    "playwright>=1.40.0",
+]
 
 [project.scripts]
 aero-code = "aero_code.cli:cli"
