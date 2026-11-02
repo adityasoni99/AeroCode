@@ -1,6 +1,19 @@
 # Aero-Code (ProofLoop)
 ## Technical Architecture & Hackathon Execution Master Plan
 
+> **Historical blueprint; current status checked November 2, 2026.**
+> Implemented: Python state machine, demo fixtures, Git Guard, Docker/subprocess
+> adapters, SSE dashboard, and CLI. `v0.2.6-verified` recorded 110 passing tests
+> with real Docker and Chromium, plus one Windows symlink privilege skip.
+> OpenShell, Nebius remote jobs, MCP, Forge, and real end-to-end PR publication
+> are not completed integrations. Live inference/search have not been validated
+> by the offline test results. Reports are reproducible JSON/Markdown, not
+> cryptographically signed artifacts.
+> Use [README](README.md), [ROADMAP](ROADMAP.md), and
+> [the submission guide](docs/HACKATHON_SUBMISSIONS.md) as current references.
+> The Nebius event page currently says the event has ended; this blueprint is
+> not evidence of registration, eligibility, or a completed submission.
+
 > **Hackathon:** Nebius × NVIDIA Global AI Hackathon  
 > **Primary Track:** Coding and Agentic Engineering  
 > **Potential Bonus:** Best Use of Tavily ($3,000)  
@@ -92,13 +105,13 @@ ProofLoop introduces an explicit verification loop around code generation:
 - **FAQ:** [Nebius Global AI Hackathon FAQs](https://nebiusglobalaihackathon.devpost.com/details/faqs)
 
 ### Mandatory Compliance Checklist
-- [x] Register and submit under the **Coding and Agentic Engineering Track**.
-- [x] Perform live runtime inference calls to **Nebius Token Factory** (`https://api.tokenfactory.nebius.com/v1/`).
-- [x] Use at least one eligible **NVIDIA open-source model** (`nvidia/Nemotron-3.5-Lightning` or `nvidia/Nemotron-3-Ultra-550b-a55b`).
+- [ ] Verify an open event and register for an eligible track before submitting.
+- [ ] Record live runtime inference calls to **Nebius Token Factory** (`https://api.tokenfactory.nebius.com/v1/`).
+- [ ] Demonstrate an eligible **NVIDIA open-source model** (`nvidia/Nemotron-3.5-Lightning` or `nvidia/Nemotron-3-Ultra-550b-a55b`).
 - [x] Provide a functional application and open-source public GitHub repository with an approved license (`MIT` or `Apache-2.0`).
-- [x] Integrate **Tavily API** dynamically during runtime to qualify for the **$3,000 Best Use of Tavily** bonus.
+- [ ] Demonstrate dynamic **Tavily API** calls to establish sponsor usage; cached demo citations do not qualify on their own.
 - [x] Include comprehensive setup instructions and document all Nebius/NVIDIA technical integrations in the `README.md`.
-- [x] Submit a public YouTube video demo under 3 minutes showing real execution.
+- [ ] Submit a public YouTube video under the event's required length, clearly distinguishing live APIs from fixtures.
 
 ---
 
@@ -220,7 +233,9 @@ Repository code is untrusted code. Aero-Code executes code inside isolated sandb
 - Non-root user execution inside disposable Docker containers.
 - Resource constraints: 2 vCPUs, 2GB RAM max, strict 60-second timeouts.
 - Network disabled during pytest execution.
-- Cloud API keys (`NEBIUS_API_KEY`, `TAVILY_API_KEY`) are never exposed inside the sandbox environment.
+- Docker does not inherit host API keys. Trusted images and repository files
+  still require secret review. The demo subprocess adapter strips named keys
+  but does not provide container isolation.
 
 ---
 
@@ -264,6 +279,11 @@ NEMOTRON_ULTRA = "nvidia/Nemotron-3-Ultra-550b-a55b"
 
 ## 12. Repository Structure
 
+The following is the original proposed layout, not the implemented file tree.
+The current package lives under `aero_code/` with `llm/`, `agents/`, `verifier/`,
+`orchestrator/`, `tools/`, `schemas/`, and `web/`; benchmarks live under `benchmarks/`.
+There is no implemented OpenShell/remote jobs runner or committed sandbox Dockerfile.
+
 ```text
 aero-code/
 ├── app/
@@ -300,7 +320,9 @@ aero-code/
 
 ## 13. Evidence Report
 
-Every ProofLoop run generates a structured Markdown report and machine-readable JSON artifact attached to the GitHub Pull Request.
+Every run returns an EvidenceReport model with JSON/Markdown rendering support.
+The following is a conceptual payload, not the current schema. Without a token,
+the PR client returns a mock record; automated live branch publication is not validated.
 
 ```json
 {
@@ -325,7 +347,8 @@ Every ProofLoop run generates a structured Markdown report and machine-readable 
 
 ## 14. Benchmarking and Evaluation
 
-Aero-Code includes an evaluation suite (`benchmarks/`) containing 10–20 real-world Python bug cases to evaluate performance against standard coding agents:
+Aero-Code currently includes three seeded cases in `benchmarks/`; 10–20 cases
+and comparative evaluation against other coding agents remain future goals:
 
 - **Reproduction Rate:** % of cases where the bug baseline failure is reproduced.
 - **Verified Repair Rate:** % of cases where the patch passes all Git Guard and sandbox checks.
@@ -373,7 +396,8 @@ A 2.5-minute YouTube video demonstrating:
 ## 19. Risks and Mitigations
 
 - **Risk:** Remote sandbox latency or access restrictions.
-  - *Mitigation:* Maintain local Docker Desktop runner as a seamless fallback.
+  - *Mitigation:* Use the local Docker adapter; host subprocess fallback is explicit
+    and allowed only when Docker is unavailable, not after failed container runs.
 - **Risk:** Agent deleting or bypassing existing tests.
   - *Mitigation:* Git Guard engine strictly rejects any modification to existing test files.
 
@@ -381,11 +405,11 @@ A 2.5-minute YouTube video demonstrating:
 
 ## 20. Acceptance Criteria
 
-- [x] Application successfully connects to Nebius Token Factory at runtime.
-- [x] Tavily API searches are triggered by error stack traces.
-- [x] Baseline failure is proven before patch generation.
+- [ ] Live Nebius Token Factory inference validated with credentials.
+- [ ] Live Tavily searches validated with credentials.
+- [x] Regression failure on unpatched code is required before a VERIFIED verdict.
 - [x] Existing test files are protected by Git Guard.
-- [x] Final Pull Request contains complete Evidence Report.
+- [ ] A real published patch branch/PR contains a complete Evidence Report.
 
 ---
 

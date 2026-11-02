@@ -6,6 +6,14 @@
 - **Bonus Track:** Best Use of Tavily ($3,000)
 - **Status:** Approved Design Spec
 
+> **Historical design with current implementation notes (November 2, 2026).**
+> The original intent is retained; the current reference is
+> [README](../../../README.md), [ROADMAP](../../../ROADMAP.md), and
+> [the submission guide](../../HACKATHON_SUBMISSIONS.md).
+> `v0.2.6-verified` passed 110 tests with Docker and Chromium, with one Windows
+> symlink privilege skip. Demo inference/search/PR results are fixtures, not proof
+> of live sponsor usage; Evidence Reports are not cryptographically signed.
+
 ---
 
 ## 1. Goal & Product Positioning
@@ -105,7 +113,9 @@ aero-code/
 9. `PUBLISH_PR`: Generates a GitHub draft PR with the verified fix and embedded Evidence Report.
 
 ### 4.2 The Double-Verification Rule
-- **Condition 1 (Non-Vacuous Regression Test):** New regression test MUST FAIL on the unpatched codebase (exit code $\neq 0$).
+- **Condition 1 (Non-Vacuous Regression Test):** The new test must fail on unpatched
+  code with pytest exit code 1. Collection errors, timeout, missing tests, and
+  infrastructure failure do not establish reproduction.
 - **Condition 2 (Bug Resolution):** New regression test MUST PASS on the patched codebase (exit code $= 0$).
 - **Condition 3 (Zero Regressions):** 100% of baseline test suites must pass on the patched codebase.
 - **Condition 4 (Baseline Test Immutability):** Zero modifications allowed to existing test files.
@@ -115,8 +125,12 @@ aero-code/
 ## 5. Live & Demo Dual-Engine Mode
 
 To guarantee 100% demo reliability:
-- **Live Mode (`--live`):** Connects directly to Nebius Token Factory via OpenAI SDK and Tavily Search API using API keys from `.env`.
-- **Demo Mode (`--demo` / Default fallback):** Uses deterministic, curated replay traces for the seeded benchmark cases (`pydantic-v2-migration` and `requests-timeout-kwarg`). Allows zero-latency, reliable recording of the submission video even without network access or active API credits.
+- **Live Mode (`--mode live`):** Configure Nebius/Tavily keys and a trusted,
+  prebuilt Docker image. The current client falls back to fixtures without
+  Nebius credentials; that does not constitute live inference.
+- **Demo Mode (`--mode demo`, default):** Deterministic local fixtures for
+  `pydantic_v2_migration`, `requests_timeout_kwarg`, and `paypal_webhook_signature`.
+  Real pytest runs still take time; no live model/search claims should be made.
 
 ---
 
@@ -126,8 +140,8 @@ To guarantee 100% demo reliability:
 - Built with Python `rich`.
 - Animated live spinners, step status badges, unified color-coded diff views, and clean tabular evidence summaries.
 - Entry commands:
-  - `python -m aero_code.cli run --case pydantic-v2-migration --web`
-  - `python -m aero_code.cli run --case pydantic-v2-migration --live`
+  - `python -m aero_code.cli run --case pydantic_v2_migration --web`
+  - `python -m aero_code.cli run --case pydantic_v2_migration --mode live`
   - `python -m aero_code.cli evaluate`
 
 ### 6.2 Embedded Web Dashboard
@@ -145,7 +159,11 @@ To guarantee 100% demo reliability:
 ## 7. Sandbox Execution & Security
 
 - **Subprocess Sandbox Adapter:** Creates an ephemeral directory via `tempfile.TemporaryDirectory()`, copies target files, strips all environment secrets (`NEBIUS_API_KEY`, `TAVILY_API_KEY`, `GITHUB_TOKEN`), and executes `pytest` using `subprocess.run` with a 45-second timeout.
-- **Docker Sandbox Adapter (Pluggable):** Pre-built Docker container definition included in `aero_code/verifier/sandbox/docker.py` for environments with Docker Desktop.
+- **Docker Sandbox Adapter:** CLI-based disposable Linux containers, 2 CPUs,
+  2 GiB RAM, no additional swap/network, non-root execution, and a shared deadline
+  capped at 60 seconds. Build the dependency image beforehand; verification never pulls it.
+- Demo mode retains subprocess execution; live mode is Docker-first with
+  explicitly enabled unavailable-only host fallback. See README for limits and exclusions.
 - **Resource Limits:** Subprocess timeout kill switch prevents infinite loops or hanging tests.
 
 ---
@@ -153,8 +171,12 @@ To guarantee 100% demo reliability:
 ## 8. Benchmark Evaluation Suite
 
 Located in `benchmarks/`:
-- `benchmarks/cases/pydantic_v2_migration/`: Real-world bug where Pydantic v1 `parse_obj` raises `AttributeError` under Pydantic v2. ProofLoop searches docs with Tavily, updates to `model_validate`, and proves verification.
-- `benchmarks/cases/requests_timeout_kwarg/`: Real-world bug testing Git Guard protection against test deletion.
+- `benchmarks/cases/pydantic_v2_migration/`: Deprecated `parse_obj` usage; a new
+  regression test promotes the deprecation warning to an error and validates `model_validate`.
+- `benchmarks/cases/requests_timeout_kwarg/`: Missing timeout; regression checks
+  the actual HTTP call's bounded timeout without making an external request.
+- `benchmarks/cases/paypal_webhook_signature/`: Missing/empty transmission header
+  handling in a local fixture, not cryptographic signature validation.
 - `benchmarks/evaluate.py`: Automated runner calculating:
   - Baseline Reproduction Rate (%)
   - Verified Repair Rate (%)
